@@ -1,10 +1,13 @@
 console.log("Desenvolvido por Leonardo Klaus!") //desenvolvedor
 
 const sprites = new Image();
-sprites.src="sprites.png";
+sprites.src="imagens/sprites.png";
 
 const img_pontos = new Image();
-img_pontos.src="recorde.png";
+img_pontos.src="imagens/recorde.png";
+
+const txt_intrucoes = new Image();
+txt_intrucoes.src="imagens/txt_instrucoes.png";
 
 var frames = 0;
 var frames_canos = 0;
@@ -15,6 +18,12 @@ const ctx = canvas.getContext("2d");
 
 const som_hit = new Audio;
 som_hit.src="audio/hit.wav";
+
+const som_pts = new Audio;
+som_pts.src="audio/ponto.wav";
+
+const som_pulo = new Audio;
+som_pulo.src="audio/pulo.wav";
 
 //Botao
 //Function to get the mouse position
@@ -31,13 +40,26 @@ function isInside(pos, rect){
 }
 
 //The rectangle should have x,y,width,height properties
-var rect = {
+var rect = { //botao novo jogo 
     x:23,
     y:403,
+    width:116,
+    height:43,
+};
+
+var rect2 = { //botao instrucoes
+    x:174.6,
+    y:402,
     width:116,
     height:43
 };
 
+var rect3 = { //botao novo jogo - tela instrucoes
+    x:100,
+    y:400,
+    width:116,
+    height:43
+};
 
 
 //Plano de Fundo
@@ -95,6 +117,13 @@ function criaChao(){
                 (chao.x + chao.largura), chao.y,
                 chao.largura, chao.altura,
             );
+
+            if(telaAtiva == Tela.jogo){
+                ctx.font = "40px Comic Sans MS";
+                ctx.fillStyle = "white";
+                ctx.textAlign = "center";
+                ctx.fillText(pontos, 160, 440);
+            };
         },
         atualiza(){
             const mov_chao = 2;
@@ -154,6 +183,40 @@ const pontuacao_final = {
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
         ctx.fillText(recorde, 160, 220);
+
+    },
+};
+
+//Tela Intrucoes
+const tela_instrucoes = {
+    spriteX: 0,
+    spriteY: 376.25,
+    largura: 119.61,
+    altura: 45.66,
+    x: 100,
+    y: 400,
+    //txt: "Para jogar, simplismente clique sobre a tela.\n Cada clique fará com que o pássaro ganhe\n altura. Sua missão é percorrer a maior\n distancia possivel, superando os obtáculos.\n O jogo termina quando o pássaro bate nos\n canos ou no chão.\n ",
+    desenha() {
+        ctx.drawImage(
+            img_pontos,
+            tela_instrucoes.spriteX, tela_instrucoes.spriteY,
+            tela_instrucoes.largura, tela_instrucoes.altura,
+            tela_instrucoes.x, tela_instrucoes.y,
+            tela_instrucoes.largura, tela_instrucoes.altura,
+        );
+
+        ctx.drawImage(
+            txt_intrucoes,
+            0, 0,
+            291, 267,
+            20, 15,
+            291, 267,
+        );
+
+        ctx.font = "10px Comic Sans MS";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        //ctx.fillText(this.txt, 160, 100);
 
     },
 };
@@ -243,6 +306,7 @@ function criaFlappyBird(){
         pular(){
             //console.log("antes " + flappyBird.velocidade);
             flappyBird.velocidade = -flappyBird.pula;
+            som_pulo.play();
             //console.log("depois " + flappyBird.velocidade);
         }
     }
@@ -320,18 +384,22 @@ function criarCanos(){
                 //console.log(par.x, par.y);
                 //console.log(canos.altura + par.y);
                 if(((canos.altura + par.y) >= (globais.flappyBird.y)) && ((par.x)  <= (globais.flappyBird.x  + globais.flappyBird.largura)) && ((par.x + canos.largura) >= globais.flappyBird.x)){
-                    mudaDeTela(Tela.pontos);
+                    //mudaDeTela(Tela.pontos);
+                    deuruim();
                 }
                 if((((canos.altura + par.y) + par.esp) <= (globais.flappyBird.y + globais.flappyBird.altura)) && (globais.flappyBird.y <= canvas.height) && ((par.x)  <= (globais.flappyBird.x  + globais.flappyBird.largura)) && ((par.x + canos.largura) >= globais.flappyBird.x)){
-                    mudaDeTela(Tela.pontos);
+                    //mudaDeTela(Tela.pontos);
+                    deuruim();
                 }
-                //if((par.x == globais.flappyBird.x) && (par.y <= globais.flappyBird.y <= (par.y + canos.altura))){
-                    //mudaDeTela(Tela.inicio);
-                //}
+                function deuruim(){
+                    som_hit.play();
+                    mudaDeTela(Tela.pontos);
+                };
         
                 if(par.x + canos.largura <= 0) {
-                  canos.pares.shift();
-                  pontos++;
+                    som_pts.play();  
+                    canos.pares.shift();
+                    pontos++;
                   
                   if(pontos > recorde){
                       recorde = pontos;
@@ -400,13 +468,20 @@ const Tela = {
             planoDeFundo.desenha(); 
             globais.chao.desenha();
             pontuacao_final.desenha();
+            globais.flappyBird.desenha();
             
         },
         atualiza(){
-            globais.chao.atualiza();
         },
-        click(){
-            //mudaDeTela(Tela.inicio);
+    },
+    instrucoes: {
+        desenha(){
+            planoDeFundo.desenha(); 
+            globais.chao.desenha();
+            tela_instrucoes.desenha();
+            
+        },
+        atualiza(){
         },
     },
 };
@@ -435,7 +510,16 @@ window.addEventListener('click', function(){
     
         if (isInside(mousePos,rect) && (telaAtiva == Tela.pontos)) {
             mudaDeTela(Tela.inicio);
-        }   
+        };
+
+        if (isInside(mousePos,rect2) && (telaAtiva == Tela.pontos)) {
+            mudaDeTela(Tela.instrucoes);
+        };  
+
+        if (isInside(mousePos,rect3) && (telaAtiva == Tela.instrucoes)) {
+            mudaDeTela(Tela.inicio);
+        };
+        
     }, false);
 
 
