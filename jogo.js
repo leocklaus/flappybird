@@ -3,14 +3,42 @@ console.log("Desenvolvido por Leonardo Klaus!") //desenvolvedor
 const sprites = new Image();
 sprites.src="sprites.png";
 
+const img_pontos = new Image();
+img_pontos.src="recorde.png";
+
 var frames = 0;
 var frames_canos = 0;
 var pontos = 0;
+var recorde = 0;
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext("2d");
 
 const som_hit = new Audio;
 som_hit.src="audio/hit.wav";
+
+//Botao
+//Function to get the mouse position
+function getMousePos(canvas, event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+}
+//Function to check whether a point is inside a rectangle
+function isInside(pos, rect){
+    return pos.x > rect.x && pos.x < rect.x+rect.width && pos.y < rect.y+rect.height && pos.y > rect.y
+}
+
+//The rectangle should have x,y,width,height properties
+var rect = {
+    x:23,
+    y:403,
+    width:116,
+    height:43
+};
+
+
 
 //Plano de Fundo
 const planoDeFundo = {
@@ -100,6 +128,36 @@ const mensagemGetReady = {
     },
 };
 
+//Tela Pontos
+const pontuacao_final = {
+    spriteX: 0,
+    spriteY: 0,
+    largura: 273,
+    altura: 422,
+    x: 23.5,
+    y: 20,
+    desenha() {
+        ctx.drawImage(
+            img_pontos,
+            pontuacao_final.spriteX, pontuacao_final.spriteY,
+            pontuacao_final.largura, pontuacao_final.altura,
+            pontuacao_final.x, pontuacao_final.y,
+            pontuacao_final.largura, pontuacao_final.altura,
+        );
+
+        ctx.font = "40px Comic Sans MS";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText(pontos, 160, 100);
+
+        ctx.font = "40px Comic Sans MS";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText(recorde, 160, 220);
+
+    },
+};
+
 function fazColisao(){
     if(globais.flappyBird.y >= 340){
         return true;
@@ -152,7 +210,7 @@ function criaFlappyBird(){
             if(fazColisao()){
                 som_hit.play();
                 setTimeout(() => {
-                    mudaDeTela(Tela.inicio);
+                    mudaDeTela(Tela.pontos);
                   }, 500);
                 return;
             }else{
@@ -262,10 +320,10 @@ function criarCanos(){
                 //console.log(par.x, par.y);
                 //console.log(canos.altura + par.y);
                 if(((canos.altura + par.y) >= (globais.flappyBird.y)) && ((par.x)  <= (globais.flappyBird.x  + globais.flappyBird.largura)) && ((par.x + canos.largura) >= globais.flappyBird.x)){
-                    mudaDeTela(Tela.inicio);
+                    mudaDeTela(Tela.pontos);
                 }
                 if((((canos.altura + par.y) + par.esp) <= (globais.flappyBird.y + globais.flappyBird.altura)) && (globais.flappyBird.y <= canvas.height) && ((par.x)  <= (globais.flappyBird.x  + globais.flappyBird.largura)) && ((par.x + canos.largura) >= globais.flappyBird.x)){
-                    mudaDeTela(Tela.inicio);
+                    mudaDeTela(Tela.pontos);
                 }
                 //if((par.x == globais.flappyBird.x) && (par.y <= globais.flappyBird.y <= (par.y + canos.altura))){
                     //mudaDeTela(Tela.inicio);
@@ -274,7 +332,10 @@ function criarCanos(){
                 if(par.x + canos.largura <= 0) {
                   canos.pares.shift();
                   pontos++;
-                  //console.log(pontos);
+                  
+                  if(pontos > recorde){
+                      recorde = pontos;
+                  };
                 }
             })
         },
@@ -300,6 +361,7 @@ const Tela = {
             globais.flappyBird = criaFlappyBird();
             globais.chao = criaChao();
             globais.canos = criarCanos();
+            pontos = 0;
         },
         desenha(){
             planoDeFundo.desenha(); 
@@ -311,7 +373,6 @@ const Tela = {
         atualiza(){
             globais.chao.atualiza();
             globais.flappyBird.atualiza_inicio();
-            globais.canos.atualiza();
         },
         click(){
             mudaDeTela(Tela.jogo);
@@ -333,7 +394,21 @@ const Tela = {
         click(){
             globais.flappyBird.pular();
         },
-    }
+    },
+    pontos: {
+        desenha(){
+            planoDeFundo.desenha(); 
+            globais.chao.desenha();
+            pontuacao_final.desenha();
+            
+        },
+        atualiza(){
+            globais.chao.atualiza();
+        },
+        click(){
+            //mudaDeTela(Tela.inicio);
+        },
+    },
 };
 
 function loop(){
@@ -352,6 +427,17 @@ window.addEventListener('click', function(){
         telaAtiva.click();
     }
 });
+
+//Verifica area do clique
+
+    canvas.addEventListener('click', function(evt) {
+        var mousePos = getMousePos(canvas, evt);
+    
+        if (isInside(mousePos,rect) && (telaAtiva == Tela.pontos)) {
+            mudaDeTela(Tela.inicio);
+        }   
+    }, false);
+
 
 mudaDeTela(Tela.inicio);
 loop();
