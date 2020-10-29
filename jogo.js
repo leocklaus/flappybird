@@ -497,11 +497,11 @@ function loop(){
     requestAnimationFrame(loop);
 }
 
-window.addEventListener('click', function(){
+canvas.onclick = function(){    
     if(telaAtiva.click){
         telaAtiva.click();
     }
-});
+};
 
 //Verifica area do clique
 
